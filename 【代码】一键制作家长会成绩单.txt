@@ -1,0 +1,129 @@
+
+Sub 一键制作家长会成绩单()
+
+    Application.ScreenUpdating = False
+    
+    'step1：合并当前工作簿下的所有工作表
+
+    Dim SumRows(50) As Integer '定义长度为50的数组
+
+    For j = 1 To Sheets.Count
+
+        If Sheets(j).Name <> ActiveSheet.Name Then
+        
+            SumRows(j) = Sheets(j).UsedRange.Rows.Count '记录每个表的行数
+            
+            If j >= 2 And SumRows(j) <> SumRows(j - 1) Then
+            
+                MsgBox "请重新检查每个表的行数，确保一致！", vbInformation, "错误提示"
+            
+                ActiveSheet.Range("1:65536").Clear
+                
+                Exit Sub
+                
+            
+            End If
+
+            x = Range("A65536").End(xlUp).Row + 1
+
+            Sheets(j).UsedRange.Copy Cells(x, 1)
+
+        End If
+
+    Next
+
+    Range("B1").Select
+
+    Application.ScreenUpdating = True
+    
+    'step2：去掉重复表头
+    
+    Dim k
+    
+    k = 2
+
+    For j = 1 To Sheets.Count - 1
+    
+        k = k + SumRows(j)
+          
+        Rows(k).Select
+        
+        Selection.Delete Shift:=xlUp
+        
+        k = k - 1
+        
+
+    Next
+
+    Rows(1).Select
+        
+    Selection.Delete Shift:=xlUp
+    
+    'step3：将数据按照姓名重新排序
+       
+    ActiveSheet.UsedRange.Select
+    
+    For j = 1 To UsedRange.Columns.Count
+
+        If InStr(Cells(1, j), "姓名") Then '如果Cells(1, j)包含姓名
+        
+            Selection.Sort Key1:=Cells(1, j), Order1:=xlAscending, Header:=xlGuess, _
+                OrderCustom:=1, MatchCase:=False, Orientation:=xlTopToBottom, SortMethod _
+                :=xlPinYin, DataOption1:=xlSortTextAsNumbers
+                
+            Call 间隔k行插入表头(Sheets.Count - 1)
+
+            Exit Sub '跳出结束
+
+        End If
+    Next
+    
+    MsgBox "请您先命名学生姓名列所在表头为姓名，再重新执行程序！", vbInformation, "温馨提示"
+    
+End Sub
+
+
+Private Sub 间隔k行插入表头(k As Integer)
+
+    ActiveSheet.Unprotect
+    
+    'k = InputBox("请输入共有几次成绩：", "温馨提示")
+    
+    Dim x&
+    
+    x = k + 2 '前面第一个人有表头不需要插入，表头1行+间隔k行，故从第k+2行开始才需要操作
+    
+    Application.ScreenUpdating = False
+    
+    With ActiveSheet
+    
+        Do While .Cells(x, 1) <> ""
+        
+        '插入表头
+        
+        ActiveSheet.Select
+        
+            .Rows(1).Copy  '.Range("A1:D1").Copy
+            
+            .Cells(x, 1).Insert Shift:=xlDown
+            
+        '插入空白行
+        
+        Rows(x).Select
+        
+        Selection.Insert Shift:=xlDown
+        
+        x = x + k + 2 '跳到下个学生
+        
+        Loop
+        
+    End With
+    
+    Application.ScreenUpdating = True
+    
+End Sub
+
+
+
+
+
